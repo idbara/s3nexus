@@ -1,0 +1,219 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-danger: #ef4444;
+  --color-success: #22c55e;
+  --color-warning: #f59e0b;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Animation keyframes */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoom-in-95 {
+  from {
+    transform: scale(0.95);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-from-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation: fade-in 0.15s ease-out;
+}
+
+.zoom-in-95 {
+  animation: zoom-in-95 0.15s ease-out;
+}
+
+.slide-in-from-right {
+  animation: slide-in-from-right 0.3s ease-out;
+}
+
+/* Prevent text selection on UI elements */
+button,
+[role="button"] {
+  user-select: none;
+}
+
+/* Table styling */
+table {
+  border-collapse: collapse;
+}
+
+/* Prose styling for markdown preview */
+.prose {
+  color: #374151;
+  line-height: 1.75;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  color: #111827;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.prose h1 {
+  font-size: 1.5em;
+  margin-top: 0;
+  margin-bottom: 0.5em;
+}
+
+.prose h2 {
+  font-size: 1.25em;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+.prose h3 {
+  font-size: 1.1em;
+  margin-top: 1.25em;
+  margin-bottom: 0.25em;
+}
+
+.prose p {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+.prose code {
+  background: #f3f4f6;
+  padding: 0.15em 0.35em;
+  border-radius: 0.25em;
+  font-size: 0.875em;
+}
+
+.prose pre {
+  background: #1f2937;
+  color: #e5e7eb;
+  padding: 1em;
+  border-radius: 0.5em;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+}
+
+.prose a {
+  color: #3b82f6;
+  text-decoration: underline;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.5em;
+  margin: 0.75em 0;
+}
+
+.prose li {
+  margin: 0.25em 0;
+}
+
+.prose blockquote {
+  border-left: 3px solid #d1d5db;
+  padding-left: 1em;
+  color: #6b7280;
+  margin: 1em 0;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid #d1d5db;
+  padding: 0.5em 0.75em;
+  text-align: left;
+}
+
+.prose th {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.dark .prose {
+  color: #d1d5db;
+}
+
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4 {
+  color: #f3f4f6;
+}
+
+.dark .prose code {
+  background: #374151;
+}
+
+.dark .prose blockquote {
+  border-color: #4b5563;
+  color: #9ca3af;
+}
+
+.dark .prose th,
+.dark .prose td {
+  border-color: #4b5563;
+}
+
+.dark .prose th {
+  background: #374151;
+}
