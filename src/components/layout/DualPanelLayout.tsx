@@ -11,7 +11,7 @@ import { useProfileStore } from "../../stores/profileStore";
 import { useTransferStore } from "../../stores/transferStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
-import { cn } from "../../lib/utils";
+import { cn, errMsg } from "../../lib/utils";
 
 export function DualPanelLayout() {
   const [leftPercent, setLeftPercent] = useState(50);
@@ -19,11 +19,13 @@ export function DualPanelLayout() {
   const [dragOverRight, setDragOverRight] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
+  const leftDragCounter = useRef(0);
+  const rightDragCounter = useRef(0);
 
-  const { currentBucket, currentPrefix, fetchObjects } = useExplorerStore();
-  const { currentPath, refresh } = useLocalExplorerStore();
+  const { currentBucket, currentPrefix } = useExplorerStore();
+  const { currentPath } = useLocalExplorerStore();
   const { activeProfileId } = useProfileStore();
-  const { openPanel } = useTransferStore();
+  const { openPanel, fetchTransfers } = useTransferStore();
   const { addToast } = useToastStore();
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -52,25 +54,37 @@ export function DualPanelLayout() {
     document.addEventListener("mouseup", handleMouseUp);
   }, []);
 
-  // Left panel: accepts S3 drops → download
-  const handleLeftDragOver = useCallback(
-    (e: DragEvent) => {
-      if (e.dataTransfer.types.includes("application/x-s3nexus-s3")) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "copy";
-        setDragOverLeft(true);
-      }
-    },
-    []
-  );
+  // ── Left panel: accepts S3 drops → download ──
 
-  const handleLeftDragLeave = useCallback(() => {
-    setDragOverLeft(false);
+  const handleLeftDragEnter = useCallback((e: DragEvent) => {
+    if (e.dataTransfer.types.includes("application/x-s3nexus-s3")) {
+      e.preventDefault();
+      leftDragCounter.current++;
+      setDragOverLeft(true);
+    }
+  }, []);
+
+  const handleLeftDragOver = useCallback((e: DragEvent) => {
+    if (e.dataTransfer.types.includes("application/x-s3nexus-s3")) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    }
+  }, []);
+
+  const handleLeftDragLeave = useCallback((e: DragEvent) => {
+    if (e.dataTransfer.types.includes("application/x-s3nexus-s3")) {
+      leftDragCounter.current--;
+      if (leftDragCounter.current <= 0) {
+        leftDragCounter.current = 0;
+        setDragOverLeft(false);
+      }
+    }
   }, []);
 
   const handleLeftDrop = useCallback(
     async (e: DragEvent) => {
       e.preventDefault();
+      leftDragCounter.current = 0;
       setDragOverLeft(false);
 
       const raw = e.dataTransfer.getData("application/x-s3nexus-s3");
@@ -89,37 +103,49 @@ export function DualPanelLayout() {
         const { keys } = JSON.parse(raw) as { keys: string[] };
         await api.downloadFiles(activeProfileId, currentBucket, keys, currentPath);
         openPanel();
+        fetchTransfers();
         addToast(
           `Downloading ${keys.length} item${keys.length > 1 ? "s" : ""} to local`,
           "success"
         );
-        refresh();
       } catch (err) {
-        addToast(`Download failed: ${err}`, "error");
+        addToast(`Download failed: ${errMsg(err)}`, "error");
       }
     },
-    [activeProfileId, currentBucket, currentPath, addToast, openPanel, refresh]
+    [activeProfileId, currentBucket, currentPath, addToast, openPanel, fetchTransfers]
   );
 
-  // Right panel: accepts local drops → upload
-  const handleRightDragOver = useCallback(
-    (e: DragEvent) => {
-      if (e.dataTransfer.types.includes("application/x-s3nexus-local")) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = "copy";
-        setDragOverRight(true);
+  // ── Right panel: accepts local drops → upload ──
+
+  const handleRightDragEnter = useCallback((e: DragEvent) => {
+    if (e.dataTransfer.types.includes("application/x-s3nexus-local")) {
+      e.preventDefault();
+      rightDragCounter.current++;
+      setDragOverRight(true);
+    }
+  }, []);
+
+  const handleRightDragOver = useCallback((e: DragEvent) => {
+    if (e.dataTransfer.types.includes("application/x-s3nexus-local")) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+    }
+  }, []);
+
+  const handleRightDragLeave = useCallback((e: DragEvent) => {
+    if (e.dataTransfer.types.includes("application/x-s3nexus-local")) {
+      rightDragCounter.current--;
+      if (rightDragCounter.current <= 0) {
+        rightDragCounter.current = 0;
+        setDragOverRight(false);
       }
-    },
-    []
-  );
-
-  const handleRightDragLeave = useCallback(() => {
-    setDragOverRight(false);
+    }
   }, []);
 
   const handleRightDrop = useCallback(
     async (e: DragEvent) => {
       e.preventDefault();
+      rightDragCounter.current = 0;
       setDragOverRight(false);
 
       const raw = e.dataTransfer.getData("application/x-s3nexus-local");
@@ -134,16 +160,16 @@ export function DualPanelLayout() {
         const { paths } = JSON.parse(raw) as { paths: string[] };
         await api.uploadFiles(activeProfileId, currentBucket, currentPrefix, paths);
         openPanel();
+        fetchTransfers();
         addToast(
           `Uploading ${paths.length} item${paths.length > 1 ? "s" : ""} to S3`,
           "success"
         );
-        fetchObjects(activeProfileId);
       } catch (err) {
-        addToast(`Upload failed: ${err}`, "error");
+        addToast(`Upload failed: ${errMsg(err)}`, "error");
       }
     },
-    [activeProfileId, currentBucket, currentPrefix, addToast, openPanel, fetchObjects]
+    [activeProfileId, currentBucket, currentPrefix, addToast, openPanel, fetchTransfers]
   );
 
   return (
@@ -152,9 +178,10 @@ export function DualPanelLayout() {
       <div
         className={cn(
           "flex flex-col min-w-0 border-r border-gray-200 dark:border-gray-700 transition-shadow",
-          dragOverLeft && "ring-2 ring-primary/50"
+          dragOverLeft && "ring-2 ring-inset ring-primary/50"
         )}
         style={{ flexBasis: `${leftPercent}%`, flexShrink: 0, flexGrow: 0 }}
+        onDragEnter={handleLeftDragEnter}
         onDragOver={handleLeftDragOver}
         onDragLeave={handleLeftDragLeave}
         onDrop={handleLeftDrop}
@@ -176,8 +203,9 @@ export function DualPanelLayout() {
       <div
         className={cn(
           "flex flex-col min-w-0 flex-1 transition-shadow",
-          dragOverRight && "ring-2 ring-primary/50"
+          dragOverRight && "ring-2 ring-inset ring-primary/50"
         )}
+        onDragEnter={handleRightDragEnter}
         onDragOver={handleRightDragOver}
         onDragLeave={handleRightDragLeave}
         onDrop={handleRightDrop}

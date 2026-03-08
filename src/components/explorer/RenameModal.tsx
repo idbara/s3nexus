@@ -8,6 +8,7 @@ import { useProfileStore } from "../../stores/profileStore";
 import { useExplorerStore } from "../../stores/explorerStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
+import { errMsg } from "../../lib/utils";
 import type { ObjectInfo } from "../../types";
 
 export function RenameModal() {
@@ -45,7 +46,7 @@ export function RenameModal() {
       await fetchObjects(activeProfileId);
       closeModal();
     } catch (err) {
-      addToast(`Rename failed: ${err}`, "error");
+      addToast(`Rename failed: ${errMsg(err)}`, "error");
     } finally {
       setRenaming(false);
     }

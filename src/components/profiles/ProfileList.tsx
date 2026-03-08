@@ -4,7 +4,7 @@ import { useModalStore } from "../../stores/modalStore";
 import { useToastStore } from "../../stores/toastStore";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
-import { cn } from "../../lib/utils";
+import { cn, errMsg } from "../../lib/utils";
 import type { Profile } from "../../types";
 
 function getProviderIcon(provider: string) {
@@ -35,7 +35,7 @@ export function ProfileList() {
       await deleteProfile(profile.id);
       addToast("Profile deleted", "success");
     } catch (err) {
-      addToast(`Failed to delete: ${err}`, "error");
+      addToast(`Failed to delete: ${errMsg(err)}`, "error");
     }
   };
 

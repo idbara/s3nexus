@@ -8,7 +8,7 @@ import { useProfileStore } from "../../stores/profileStore";
 import { useExplorerStore } from "../../stores/explorerStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
-import { formatBytes, getFileExtension } from "../../lib/utils";
+import { formatBytes, getFileExtension, errMsg } from "../../lib/utils";
 import type { PreviewResult } from "../../types";
 
 export function PreviewPanel() {
@@ -33,7 +33,7 @@ export function PreviewPanel() {
           setPreview(result);
         })
         .catch((err) => {
-          addToast(`Failed to load preview: ${err}`, "error");
+          addToast(`Failed to load preview: ${errMsg(err)}`, "error");
         })
         .finally(() => {
           setLoading(false);

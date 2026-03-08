@@ -10,6 +10,7 @@ import { useExplorerStore } from "../../stores/explorerStore";
 import { useToastStore } from "../../stores/toastStore";
 import { useThemeStore } from "../../stores/themeStore";
 import { api } from "../../lib/tauri";
+import { errMsg } from "../../lib/utils";
 
 export function PolicyEditorModal() {
   const { activeModal, closeModal } = useModalStore();
@@ -39,7 +40,7 @@ export function PolicyEditorModal() {
           }
         })
         .catch((err) => {
-          addToast(`Failed to load policy: ${err}`, "error");
+          addToast(`Failed to load policy: ${errMsg(err)}`, "error");
           setPolicyJson("");
         });
     }
@@ -85,7 +86,7 @@ export function PolicyEditorModal() {
       await api.setBucketPolicy(activeProfileId, currentBucket, policyJson);
       addToast("Bucket policy updated", "success");
     } catch (err) {
-      addToast(`Failed to set policy: ${err}`, "error");
+      addToast(`Failed to set policy: ${errMsg(err)}`, "error");
     } finally {
       setSaving(false);
     }
@@ -101,7 +102,7 @@ export function PolicyEditorModal() {
       setPolicyJson("");
       addToast("Bucket policy deleted", "success");
     } catch (err) {
-      addToast(`Failed to delete policy: ${err}`, "error");
+      addToast(`Failed to delete policy: ${errMsg(err)}`, "error");
     } finally {
       setSaving(false);
     }

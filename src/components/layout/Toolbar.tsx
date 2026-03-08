@@ -15,6 +15,7 @@ import { useModalStore } from "../../stores/modalStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
 import { Button } from "../ui/Button";
+import { errMsg } from "../../lib/utils";
 
 export function Toolbar() {
   const {
@@ -65,7 +66,7 @@ export function Toolbar() {
       await fetchObjects(activeProfileId);
       addToast(`Deleted ${keys.length} item(s)`, "success");
     } catch (err) {
-      addToast(`Delete failed: ${err}`, "error");
+      addToast(`Delete failed: ${errMsg(err)}`, "error");
     }
   };
 
@@ -102,7 +103,7 @@ export function Toolbar() {
       // Refresh local panel after a short delay to show new files
       setTimeout(() => refreshLocal(), 2000);
     } catch (err) {
-      addToast(`Download failed: ${err}`, "error");
+      addToast(`Download failed: ${errMsg(err)}`, "error");
     } finally {
       setDownloading(false);
     }

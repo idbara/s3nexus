@@ -1,6 +1,9 @@
 import { create } from "zustand";
 import type { TransferTask, TransferProgressEvent } from "../types";
 import { api } from "../lib/tauri";
+import { useExplorerStore } from "./explorerStore";
+import { useLocalExplorerStore } from "./localExplorerStore";
+import { useProfileStore } from "./profileStore";
 
 interface TransferStore {
   transfers: TransferTask[];
@@ -46,6 +49,16 @@ export const useTransferStore = create<TransferStore>((set) => ({
       });
       return { transfers };
     });
+
+    // Auto-refresh file panels when a transfer completes
+    if (event.status === "completed") {
+      const profileId = useProfileStore.getState().activeProfileId;
+      const bucket = useExplorerStore.getState().currentBucket;
+      if (profileId && bucket) {
+        useExplorerStore.getState().fetchObjects(profileId);
+      }
+      useLocalExplorerStore.getState().refresh();
+    }
   },
 
   togglePanel: () => {

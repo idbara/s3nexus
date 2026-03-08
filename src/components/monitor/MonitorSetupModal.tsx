@@ -9,6 +9,7 @@ import { useProfileStore } from "../../stores/profileStore";
 import { useExplorerStore } from "../../stores/explorerStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
+import { errMsg } from "../../lib/utils";
 
 export function MonitorSetupModal() {
   const { activeModal, closeModal } = useModalStore();
@@ -40,7 +41,7 @@ export function MonitorSetupModal() {
       addToast("Monitor created successfully", "success");
       closeModal();
     } catch (err) {
-      addToast(`Failed to create monitor: ${err}`, "error");
+      addToast(`Failed to create monitor: ${errMsg(err)}`, "error");
     } finally {
       setCreating(false);
     }

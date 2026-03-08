@@ -8,6 +8,7 @@ import { api } from "../../lib/tauri";
 import { FileRow } from "./FileRow";
 import { ContextMenu } from "./ContextMenu";
 import { EmptyState } from "./EmptyState";
+import { errMsg } from "../../lib/utils";
 import type { ObjectInfo } from "../../types";
 
 export function FileExplorer() {
@@ -39,7 +40,8 @@ export function FileExplorer() {
     if (activeProfileId && currentBucket) {
       fetchObjects(activeProfileId);
     }
-  }, [activeProfileId, currentBucket, currentPrefix, fetchObjects]);
+    // currentPrefix is NOT a dep — navigateToPrefix/navigateUp fetch directly
+  }, [activeProfileId, currentBucket, fetchObjects]);
 
   const filteredObjects = useMemo(() => {
     if (!searchQuery) return objects;
@@ -116,7 +118,7 @@ export function FileExplorer() {
             );
             addToast(`Download started: ${obj.display_name}`, "success");
           } catch (err) {
-            addToast(`Download failed: ${err}`, "error");
+            addToast(`Download failed: ${errMsg(err)}`, "error");
           }
           break;
         case "preview":

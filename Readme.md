@@ -56,8 +56,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/idbara/s3-nexus.git
-cd s3-nexus
+git clone https://github.com/idbara/s3nexus.git
+cd s3nexus
 
 # Install frontend dependencies
 npm install

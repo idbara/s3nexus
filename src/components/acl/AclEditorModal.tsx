@@ -8,7 +8,7 @@ import { useExplorerStore } from "../../stores/explorerStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
 import type { ObjectAcl } from "../../types";
-import { cn } from "../../lib/utils";
+import { cn, errMsg } from "../../lib/utils";
 
 const ACL_PRESETS = [
   { value: "private", label: "Private", desc: "Owner only" },
@@ -51,7 +51,7 @@ export function AclEditorModal() {
           setAcl(result);
         })
         .catch((err) => {
-          addToast(`Failed to load ACL: ${err}`, "error");
+          addToast(`Failed to load ACL: ${errMsg(err)}`, "error");
         })
         .finally(() => {
           setLoading(false);
@@ -79,7 +79,7 @@ export function AclEditorModal() {
       setAcl(updated);
       setSelectedPreset(null);
     } catch (err) {
-      addToast(`Failed to update ACL: ${err}`, "error");
+      addToast(`Failed to update ACL: ${errMsg(err)}`, "error");
     } finally {
       setApplying(false);
     }

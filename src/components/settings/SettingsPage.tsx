@@ -9,7 +9,7 @@ import { useThemeStore } from "../../stores/themeStore";
 import { useToastStore } from "../../stores/toastStore";
 import { MonitorList } from "../monitor/MonitorList";
 import { api } from "../../lib/tauri";
-import { cn } from "../../lib/utils";
+import { cn, errMsg } from "../../lib/utils";
 
 const TABS = [
   { id: "general", label: "General", icon: Settings },
@@ -94,7 +94,7 @@ export function SettingsPage() {
       await api.setBandwidthLimit(limit);
       addToast("Bandwidth limit updated", "success");
     } catch (err) {
-      addToast(`Failed to set bandwidth: ${err}`, "error");
+      addToast(`Failed to set bandwidth: ${errMsg(err)}`, "error");
     }
   };
 
@@ -109,7 +109,7 @@ export function SettingsPage() {
       }
       addToast("Proxy settings saved", "success");
     } catch (err) {
-      addToast(`Failed to save proxy: ${err}`, "error");
+      addToast(`Failed to save proxy: ${errMsg(err)}`, "error");
     }
   };
 

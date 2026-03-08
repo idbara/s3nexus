@@ -12,7 +12,7 @@ import { Button } from "../ui/Button";
 import { useModalStore } from "../../stores/modalStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
-import { formatDate, cn } from "../../lib/utils";
+import { formatDate, cn, errMsg } from "../../lib/utils";
 import type { MonitorConfig } from "../../types";
 
 export function MonitorList() {
@@ -28,7 +28,7 @@ export function MonitorList() {
       const list = await api.listMonitors();
       setMonitors(list);
     } catch (err) {
-      addToast(`Failed to load monitors: ${err}`, "error");
+      addToast(`Failed to load monitors: ${errMsg(err)}`, "error");
     } finally {
       setLoading(false);
     }
@@ -48,7 +48,7 @@ export function MonitorList() {
       );
       addToast("Monitor stopped", "success");
     } catch (err) {
-      addToast(`Failed to stop monitor: ${err}`, "error");
+      addToast(`Failed to stop monitor: ${errMsg(err)}`, "error");
     }
   };
 
@@ -59,7 +59,7 @@ export function MonitorList() {
       setMonitors((prev) => prev.filter((m) => m.id !== id));
       addToast("Monitor deleted", "success");
     } catch (err) {
-      addToast(`Failed to delete monitor: ${err}`, "error");
+      addToast(`Failed to delete monitor: ${errMsg(err)}`, "error");
     }
   };
 

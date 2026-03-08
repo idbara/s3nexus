@@ -28,10 +28,14 @@ export function DeleteConfirmModal() {
       await api.deleteObjects(activeProfileId, currentBucket, [objectKey]);
       clearSelection();
       addToast(`Deleted: ${object?.display_name || objectKey}`, "success");
-      await fetchObjects(activeProfileId);
       closeModal();
-    } catch (err) {
-      addToast(`Delete failed: ${err}`, "error");
+      // Refresh after closing — errors here shouldn't show as "delete failed"
+      fetchObjects(activeProfileId).catch(() => {});
+    } catch (err: unknown) {
+      const msg = err && typeof err === "object" && "message" in err
+        ? (err as { message: string }).message
+        : String(err);
+      addToast(`Delete failed: ${msg}`, "error");
     } finally {
       setDeleting(false);
     }

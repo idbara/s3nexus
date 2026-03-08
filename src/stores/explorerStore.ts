@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import type { BucketInfo, ObjectInfo } from "../types";
 import { api } from "../lib/tauri";
+import { useProfileStore } from "./profileStore";
 
 interface ExplorerStore {
   buckets: BucketInfo[];
@@ -12,8 +13,8 @@ interface ExplorerStore {
   selectedKeys: Set<string>;
   fetchBuckets: (profileId: string) => Promise<void>;
   setCurrentBucket: (bucket: string) => void;
-  navigateToPrefix: (prefix: string) => void;
-  navigateUp: () => void;
+  navigateToPrefix: (prefix: string) => Promise<void>;
+  navigateUp: () => Promise<void>;
   fetchObjects: (profileId: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   toggleSelection: (key: string) => void;
@@ -53,16 +54,20 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
     });
   },
 
-  navigateToPrefix: (prefix: string) => {
+  navigateToPrefix: async (prefix: string) => {
     set({
       currentPrefix: prefix,
       objects: [],
       selectedKeys: new Set(),
       searchQuery: "",
     });
+    const profileId = useProfileStore.getState().activeProfileId;
+    if (profileId) {
+      await get().fetchObjects(profileId);
+    }
   },
 
-  navigateUp: () => {
+  navigateUp: async () => {
     const { currentPrefix } = get();
     if (!currentPrefix) return;
     const parts = currentPrefix.replace(/\/$/, "").split("/");
@@ -73,6 +78,10 @@ export const useExplorerStore = create<ExplorerStore>((set, get) => ({
       objects: [],
       selectedKeys: new Set(),
     });
+    const profileId = useProfileStore.getState().activeProfileId;
+    if (profileId) {
+      await get().fetchObjects(profileId);
+    }
   },
 
   fetchObjects: async (profileId: string) => {

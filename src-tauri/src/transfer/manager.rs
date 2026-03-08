@@ -13,8 +13,9 @@ use crate::transfer::events::emit_transfer_progress;
 use crate::transfer::multipart::{multipart_upload, MultipartConfig};
 use crate::transfer::throttle::BandwidthThrottle;
 
-/// Threshold above which multipart upload is used (100 MB).
-const MULTIPART_THRESHOLD: u64 = 100 * 1024 * 1024;
+/// Threshold above which multipart upload is used (5 MB).
+/// Lowered from 100 MB so most uploads get per-part progress tracking.
+const MULTIPART_THRESHOLD: u64 = 5 * 1024 * 1024;
 
 /// Maximum number of concurrent transfers.
 const MAX_CONCURRENT_TRANSFERS: usize = 10;
@@ -645,7 +646,7 @@ impl TransferManager {
 // Simple (non-multipart) upload helper
 // ---------------------------------------------------------------
 
-/// Upload a small file using a single PutObject call with progress.
+/// Upload a small file (< 5 MB) using a single PutObject call with progress.
 async fn simple_upload(
     client: &aws_sdk_s3::Client,
     bucket: &str,
@@ -665,15 +666,60 @@ async fn simple_upload(
         return Err(AppError::Transfer("Transfer cancelled".into()));
     }
 
-    // Read the entire file into memory (it is <= 100 MB)
+    // Read the file in chunks to report reading progress
     let mut file = tokio::fs::File::open(file_path)
         .await
         .map_err(|e| AppError::Io(e))?;
 
     let mut data = Vec::with_capacity(file_size as usize);
-    file.read_to_end(&mut data)
-        .await
-        .map_err(|e| AppError::Io(e))?;
+    let chunk_size: usize = 256 * 1024; // 256 KB
+    let mut buf = vec![0u8; chunk_size];
+    let mut bytes_read: u64 = 0;
+
+    loop {
+        if cancel_token.is_cancelled() {
+            return Err(AppError::Transfer("Transfer cancelled".into()));
+        }
+
+        let n = file.read(&mut buf).await.map_err(|e| AppError::Io(e))?;
+        if n == 0 {
+            break;
+        }
+        data.extend_from_slice(&buf[..n]);
+        bytes_read += n as u64;
+
+        // Emit progress during file read (counts as ~50% of total work)
+        let simulated_progress = bytes_read / 2; // reading = first half
+        let elapsed = start_time.elapsed().as_secs_f64();
+        let speed = if elapsed > 0.0 {
+            (bytes_read as f64 / elapsed) as u64
+        } else {
+            0
+        };
+
+        {
+            let mut tasks = tasks_map.lock().await;
+            if let Some(state) = tasks.get_mut(&transfer_id) {
+                state.task.bytes_transferred = simulated_progress;
+                state.task.speed_bps = speed;
+            }
+        }
+
+        emit_transfer_progress(
+            &app,
+            TransferProgressEvent {
+                transfer_id: transfer_id.clone(),
+                status: "in_progress".to_string(),
+                bytes_transferred: simulated_progress,
+                total_bytes: file_size,
+                speed_bps: speed,
+                eta_seconds: None,
+                parts_completed: 0,
+                parts_total: 0,
+                error: None,
+            },
+        );
+    }
 
     // Apply throttle for the whole payload
     throttle.acquire(file_size).await;

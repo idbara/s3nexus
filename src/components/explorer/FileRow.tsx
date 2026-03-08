@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import {
   Folder,
   File,
@@ -45,6 +46,7 @@ export function FileRow({
 }: FileRowProps) {
   const iconName = getFileIcon(object.display_name, object.is_folder);
   const IconComponent = iconMap[iconName] || File;
+  const didDrag = useRef(false);
 
   return (
     <tr
@@ -52,11 +54,28 @@ export function FileRow({
         "group cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-800",
         selected
           ? "bg-primary/5 dark:bg-primary/10"
-          : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+          : "hover:bg-gray-50 dark:hover:bg-gray-800/50",
+        draggable && "cursor-grab active:cursor-grabbing"
       )}
       draggable={draggable}
-      onDragStart={onDragStart ? (e) => onDragStart(e, object) : undefined}
-      onClick={() => onClick(object)}
+      onDragStart={
+        onDragStart
+          ? (e) => {
+              didDrag.current = true;
+              onDragStart(e, object);
+            }
+          : undefined
+      }
+      onDragEnd={() => {
+        // Reset after a short delay so onClick can check it
+        setTimeout(() => {
+          didDrag.current = false;
+        }, 0);
+      }}
+      onClick={() => {
+        if (didDrag.current) return;
+        onClick(object);
+      }}
       onDoubleClick={() => onDoubleClick(object)}
       onContextMenu={(e) => onContextMenu(e, object)}
     >

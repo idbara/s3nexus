@@ -90,3 +90,10 @@ export function getFileIcon(name: string, isFolder: boolean): string {
 export function cn(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
 }
+
+export function errMsg(err: unknown): string {
+  if (err && typeof err === "object" && "message" in err) {
+    return (err as { message: string }).message;
+  }
+  return String(err);
+}

@@ -10,6 +10,7 @@ import { FileRow } from "../explorer/FileRow";
 import { LocalContextMenu } from "./LocalContextMenu";
 import type { LocalFileEntry, ObjectInfo } from "../../types";
 import { HardDrive } from "lucide-react";
+import { errMsg } from "../../lib/utils";
 
 function toObjectInfo(entry: LocalFileEntry): ObjectInfo {
   return {
@@ -133,7 +134,7 @@ export function LocalExplorer() {
             openPanel();
             addToast(`Uploading ${entry.name} to S3`, "success");
           } catch (err) {
-            addToast(`Upload failed: ${err}`, "error");
+            addToast(`Upload failed: ${errMsg(err)}`, "error");
           }
           break;
         case "copyPath":
@@ -146,7 +147,7 @@ export function LocalExplorer() {
             await refresh();
             addToast(`Deleted: ${entry.name}`, "success");
           } catch (err) {
-            addToast(`Delete failed: ${err}`, "error");
+            addToast(`Delete failed: ${errMsg(err)}`, "error");
           }
           break;
       }

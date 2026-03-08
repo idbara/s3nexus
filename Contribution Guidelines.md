@@ -27,8 +27,8 @@ Thank you for taking the time to contribute! We're glad you're here.
 
 ```bash
 # Clone your fork
-git clone https://github.com/your-username/s3-nexus.git
-cd s3-nexus
+git clone https://github.com/idbara/s3nexus.git
+cd s3nexus
 
 # Install frontend dependencies
 npm install

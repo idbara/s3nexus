@@ -15,7 +15,7 @@ import { useProfileStore } from "../../stores/profileStore";
 import { useExplorerStore } from "../../stores/explorerStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
-import { formatBytes } from "../../lib/utils";
+import { formatBytes, errMsg } from "../../lib/utils";
 import type { SyncPlan, SyncResult } from "../../types";
 
 const DIRECTION_OPTIONS = [
@@ -56,7 +56,7 @@ export function SyncModal() {
       );
       setPlan(syncPlan);
     } catch (err) {
-      addToast(`Sync preview failed: ${err}`, "error");
+      addToast(`Sync preview failed: ${errMsg(err)}`, "error");
     } finally {
       setPreviewing(false);
     }
@@ -78,7 +78,7 @@ export function SyncModal() {
       setResult(syncResult);
       addToast("Sync completed", "success");
     } catch (err) {
-      addToast(`Sync failed: ${err}`, "error");
+      addToast(`Sync failed: ${errMsg(err)}`, "error");
     } finally {
       setExecuting(false);
     }

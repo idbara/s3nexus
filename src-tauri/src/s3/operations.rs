@@ -1,5 +1,4 @@
 use aws_sdk_s3::primitives::ByteStream;
-use aws_sdk_s3::types::{Delete, ObjectIdentifier};
 use std::path::Path;
 
 use crate::db::models::{BucketInfo, ListObjectsResult, ObjectInfo};
@@ -166,7 +165,9 @@ pub async fn download_object(
     Ok(())
 }
 
-/// Delete one or more objects from a bucket using the DeleteObjects batch API.
+/// Delete one or more objects from a bucket.
+/// Uses single DeleteObject for individual files (best provider compatibility).
+/// For folder keys (ending with `/`), recursively lists children and batch-deletes.
 pub async fn delete_objects(
     client: &aws_sdk_s3::Client,
     bucket: &str,
@@ -176,34 +177,90 @@ pub async fn delete_objects(
         return Ok(());
     }
 
-    // S3 DeleteObjects supports up to 1000 keys per request
-    for chunk in keys.chunks(1000) {
-        let identifiers: Vec<ObjectIdentifier> = chunk
-            .iter()
-            .map(|key| {
-                ObjectIdentifier::builder()
-                    .key(key)
-                    .build()
-                    .expect("ObjectIdentifier builder should not fail with a key set")
-            })
-            .collect();
+    // Separate folder keys from file keys
+    let mut file_keys: Vec<String> = Vec::new();
+    let mut folder_keys: Vec<String> = Vec::new();
 
-        let delete = Delete::builder()
-            .set_objects(Some(identifiers))
-            .quiet(true)
-            .build()
-            .map_err(|e| AppError::S3(format!("Failed to build Delete request: {}", e)))?;
+    for key in keys {
+        if key.ends_with('/') {
+            folder_keys.push(key);
+        } else {
+            file_keys.push(key);
+        }
+    }
 
+    // Delete individual files using single DeleteObject (most compatible)
+    for key in &file_keys {
         client
-            .delete_objects()
+            .delete_object()
             .bucket(bucket)
-            .delete(delete)
+            .key(key)
             .send()
             .await
-            .map_err(|e| AppError::S3(e.to_string()))?;
+            .map_err(|e| AppError::S3(format!("Failed to delete {}: {}", key, e)))?;
+    }
+
+    // Delete folders recursively: list all children, delete one by one
+    for folder_key in &folder_keys {
+        let mut all_keys = list_all_keys(client, bucket, folder_key).await?;
+        // Include the folder marker itself
+        all_keys.push(folder_key.clone());
+        all_keys.sort();
+        all_keys.dedup();
+
+        for key in &all_keys {
+            client
+                .delete_object()
+                .bucket(bucket)
+                .key(key)
+                .send()
+                .await
+                .map_err(|e| AppError::S3(format!("Failed to delete {}: {}", key, e)))?;
+        }
     }
 
     Ok(())
+}
+
+/// List all object keys under a given prefix (recursive, no delimiter).
+async fn list_all_keys(
+    client: &aws_sdk_s3::Client,
+    bucket: &str,
+    prefix: &str,
+) -> Result<Vec<String>, AppError> {
+    let mut all_keys = Vec::new();
+    let mut continuation_token: Option<String> = None;
+
+    loop {
+        let mut req = client
+            .list_objects_v2()
+            .bucket(bucket)
+            .prefix(prefix)
+            .max_keys(1000);
+
+        if let Some(token) = &continuation_token {
+            req = req.continuation_token(token);
+        }
+
+        let resp = req
+            .send()
+            .await
+            .map_err(|e| AppError::S3(e.to_string()))?;
+
+        for obj in resp.contents() {
+            if let Some(key) = obj.key() {
+                all_keys.push(key.to_string());
+            }
+        }
+
+        if resp.is_truncated() == Some(true) {
+            continuation_token = resp.next_continuation_token().map(|s| s.to_string());
+        } else {
+            break;
+        }
+    }
+
+    Ok(all_keys)
 }
 
 /// Copy an object within the same bucket.

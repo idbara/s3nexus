@@ -13,7 +13,7 @@ import { useProfileStore } from "../../stores/profileStore";
 import { useExplorerStore } from "../../stores/explorerStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
-import { formatBytes, formatDate } from "../../lib/utils";
+import { formatBytes, formatDate, errMsg } from "../../lib/utils";
 import type { ObjectVersion } from "../../types";
 
 export function VersionHistoryModal() {
@@ -42,7 +42,7 @@ export function VersionHistoryModal() {
           setVersions(result);
         })
         .catch((err) => {
-          addToast(`Failed to load versions: ${err}`, "error");
+          addToast(`Failed to load versions: ${errMsg(err)}`, "error");
         })
         .finally(() => {
           setLoading(false);
@@ -71,7 +71,7 @@ export function VersionHistoryModal() {
       );
       setVersions(updated);
     } catch (err) {
-      addToast(`Failed to restore version: ${err}`, "error");
+      addToast(`Failed to restore version: ${errMsg(err)}`, "error");
     } finally {
       setRestoring(null);
     }

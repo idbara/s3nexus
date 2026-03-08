@@ -9,6 +9,7 @@ import { useProfileStore } from "../../stores/profileStore";
 import { useExplorerStore } from "../../stores/explorerStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
+import { errMsg } from "../../lib/utils";
 
 const EXPIRY_OPTIONS = [
   { value: "900", label: "15 minutes" },
@@ -62,7 +63,7 @@ export function PresignedModal() {
       );
       setGeneratedUrl(result.url);
     } catch (err) {
-      addToast(`Failed to generate URL: ${err}`, "error");
+      addToast(`Failed to generate URL: ${errMsg(err)}`, "error");
     } finally {
       setLoading(false);
     }

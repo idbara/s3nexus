@@ -8,6 +8,7 @@ import { useProfileStore } from "../../stores/profileStore";
 import { useModalStore } from "../../stores/modalStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
+import { errMsg } from "../../lib/utils";
 import type { Profile } from "../../types";
 
 const PROVIDERS = [
@@ -69,7 +70,7 @@ export function ProfileForm() {
       );
     } catch (err) {
       setTestResult(false);
-      addToast(`Connection failed: ${err}`, "error");
+      addToast(`Connection failed: ${errMsg(err)}`, "error");
     } finally {
       setTesting(false);
     }
@@ -110,7 +111,7 @@ export function ProfileForm() {
       }
       closeModal();
     } catch (err) {
-      addToast(`Failed to save profile: ${err}`, "error");
+      addToast(`Failed to save profile: ${errMsg(err)}`, "error");
     } finally {
       setSaving(false);
     }

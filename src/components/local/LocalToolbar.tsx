@@ -13,6 +13,7 @@ import { useTransferStore } from "../../stores/transferStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
 import { Button } from "../ui/Button";
+import { errMsg } from "../../lib/utils";
 
 export function LocalToolbar() {
   const {
@@ -61,7 +62,7 @@ export function LocalToolbar() {
       await refresh();
       addToast(`Deleted ${paths.length} item(s)`, "success");
     } catch (err) {
-      addToast(`Delete failed: ${err}`, "error");
+      addToast(`Delete failed: ${errMsg(err)}`, "error");
     }
   };
 
@@ -75,7 +76,7 @@ export function LocalToolbar() {
       await refresh();
       addToast(`Created folder: ${name}`, "success");
     } catch (err) {
-      addToast(`Failed to create folder: ${err}`, "error");
+      addToast(`Failed to create folder: ${errMsg(err)}`, "error");
     }
   };
 
@@ -98,7 +99,7 @@ export function LocalToolbar() {
       clearSelection();
       addToast(`Uploading ${filePaths.length} file(s) to S3`, "success");
     } catch (err) {
-      addToast(`Upload failed: ${err}`, "error");
+      addToast(`Upload failed: ${errMsg(err)}`, "error");
     } finally {
       setUploading(false);
     }
