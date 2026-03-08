@@ -56,7 +56,7 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/username/s3-nexus.git
+git clone https://github.com/idbara/s3-nexus.git
 cd s3-nexus
 
 # Install frontend dependencies
