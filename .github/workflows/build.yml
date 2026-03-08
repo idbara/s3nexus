@@ -73,6 +73,6 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: "S3 Nexus ${{ github.ref_name }}"
           releaseBody: "See the assets below to download and install S3 Nexus."
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: --target ${{ matrix.target }}

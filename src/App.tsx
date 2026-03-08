@@ -21,6 +21,7 @@ import { SettingsPage } from "./components/settings/SettingsPage";
 import { NewFolderModal } from "./components/explorer/NewFolderModal";
 import { RenameModal } from "./components/explorer/RenameModal";
 import { DeleteConfirmModal } from "./components/explorer/DeleteConfirmModal";
+import { AboutModal } from "./components/about/AboutModal";
 
 function App() {
   const { initialize } = useThemeStore();
@@ -52,6 +53,7 @@ function App() {
       <NewFolderModal />
       <RenameModal />
       <DeleteConfirmModal />
+      <AboutModal />
 
       {/* Toast container */}
       <ToastContainer />

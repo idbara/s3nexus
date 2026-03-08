@@ -14,6 +14,7 @@ export type ModalType =
   | "newFolder"
   | "rename"
   | "deleteConfirm"
+  | "about"
   | null;
 
 interface ModalStore {

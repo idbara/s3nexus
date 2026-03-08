@@ -11,6 +11,7 @@ import {
   Sun,
   Moon,
   Monitor,
+  Info,
 } from "lucide-react";
 import { useProfileStore } from "../../stores/profileStore";
 import { useExplorerStore } from "../../stores/explorerStore";
@@ -172,6 +173,13 @@ export function Sidebar() {
             <Sun className="w-4 h-4" />
           )}
           Theme
+        </button>
+        <button
+          onClick={() => openModal("about")}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
+        >
+          <Info className="w-4 h-4" />
+          About
         </button>
       </div>
     </aside>
