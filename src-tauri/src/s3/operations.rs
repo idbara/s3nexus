@@ -4,6 +4,22 @@ use std::path::Path;
 use crate::db::models::{BucketInfo, ListObjectsResult, ObjectInfo};
 use crate::error::AppError;
 
+/// Extract detailed error message from AWS SDK errors by walking the source chain.
+/// The default `.to_string()` on SdkError only returns generic "service error",
+/// but the actual details (AccessDenied, NoSuchBucket, etc.) are in the source chain.
+fn detailed_sdk_error(e: &dyn std::error::Error) -> String {
+    let mut parts = vec![e.to_string()];
+    let mut source = e.source();
+    while let Some(s) = source {
+        let msg = s.to_string();
+        if !parts.contains(&msg) {
+            parts.push(msg);
+        }
+        source = s.source();
+    }
+    parts.join(": ")
+}
+
 /// List all buckets accessible by the client.
 pub async fn list_buckets(
     client: &aws_sdk_s3::Client,
@@ -12,7 +28,7 @@ pub async fn list_buckets(
         .list_buckets()
         .send()
         .await
-        .map_err(|e| AppError::S3(e.to_string()))?;
+        .map_err(|e| AppError::S3(detailed_sdk_error(&e)))?;
 
     let buckets = resp
         .buckets()
@@ -49,7 +65,7 @@ pub async fn list_objects(
     let resp = req
         .send()
         .await
-        .map_err(|e| AppError::S3(e.to_string()))?;
+        .map_err(|e| AppError::S3(detailed_sdk_error(&e)))?;
 
     // Collect common prefixes (virtual folders)
     let common_prefixes: Vec<String> = resp
@@ -112,24 +128,28 @@ pub async fn list_objects(
 }
 
 /// Upload a local file to S3 using a simple PutObject (suitable for small files).
+/// Reads the file into memory first to ensure correct SHA256 computation,
+/// which is required by some S3-compatible providers (MinIO, R2, etc.).
 pub async fn upload_object(
     client: &aws_sdk_s3::Client,
     bucket: &str,
     key: &str,
     file_path: &str,
 ) -> Result<(), AppError> {
-    let body = ByteStream::from_path(Path::new(file_path))
-        .await
+    let data = std::fs::read(Path::new(file_path))
         .map_err(|e| AppError::S3(format!("Failed to read file {}: {}", file_path, e)))?;
+    let content_length = data.len() as i64;
+    let body = ByteStream::from(data);
 
     client
         .put_object()
         .bucket(bucket)
         .key(key)
+        .content_length(content_length)
         .body(body)
         .send()
         .await
-        .map_err(|e| AppError::S3(e.to_string()))?;
+        .map_err(|e| AppError::S3(detailed_sdk_error(&e)))?;
 
     Ok(())
 }
@@ -147,7 +167,7 @@ pub async fn download_object(
         .key(key)
         .send()
         .await
-        .map_err(|e| AppError::S3(e.to_string()))?;
+        .map_err(|e| AppError::S3(detailed_sdk_error(&e)))?;
 
     let bytes = resp
         .body
@@ -197,7 +217,7 @@ pub async fn delete_objects(
             .key(key)
             .send()
             .await
-            .map_err(|e| AppError::S3(format!("Failed to delete {}: {}", key, e)))?;
+            .map_err(|e| AppError::S3(format!("Failed to delete {}: {}", key, detailed_sdk_error(&e))))?;
     }
 
     // Delete folders recursively: list all children, delete one by one
@@ -215,7 +235,7 @@ pub async fn delete_objects(
                 .key(key)
                 .send()
                 .await
-                .map_err(|e| AppError::S3(format!("Failed to delete {}: {}", key, e)))?;
+                .map_err(|e| AppError::S3(format!("Failed to delete {}: {}", key, detailed_sdk_error(&e))))?;
         }
     }
 
@@ -245,7 +265,7 @@ async fn list_all_keys(
         let resp = req
             .send()
             .await
-            .map_err(|e| AppError::S3(e.to_string()))?;
+            .map_err(|e| AppError::S3(detailed_sdk_error(&e)))?;
 
         for obj in resp.contents() {
             if let Some(key) = obj.key() {
@@ -279,7 +299,7 @@ pub async fn copy_object(
         .key(dest_key)
         .send()
         .await
-        .map_err(|e| AppError::S3(e.to_string()))?;
+        .map_err(|e| AppError::S3(detailed_sdk_error(&e)))?;
 
     Ok(())
 }
@@ -296,7 +316,7 @@ pub async fn head_object(
         .key(key)
         .send()
         .await
-        .map_err(|e| AppError::S3(e.to_string()))?;
+        .map_err(|e| AppError::S3(detailed_sdk_error(&e)))?;
 
     let is_folder = key.ends_with('/');
     let display_name = key

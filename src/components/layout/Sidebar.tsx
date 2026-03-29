@@ -7,15 +7,10 @@ import {
   Users,
   Settings,
   FolderSync,
-  Eye,
-  Sun,
-  Moon,
-  Monitor,
   Info,
 } from "lucide-react";
 import { useProfileStore } from "../../stores/profileStore";
 import { useExplorerStore } from "../../stores/explorerStore";
-import { useThemeStore } from "../../stores/themeStore";
 import { useModalStore } from "../../stores/modalStore";
 import { cn } from "../../lib/utils";
 
@@ -28,19 +23,7 @@ export function Sidebar() {
   } = useProfileStore();
   const { buckets, currentBucket, fetchBuckets, setCurrentBucket } =
     useExplorerStore();
-  const { theme, setTheme, resolved } = useThemeStore();
   const { openModal } = useModalStore();
-
-  const cycleTheme = () => {
-    const themes: Array<"light" | "dark" | "system"> = [
-      "light",
-      "dark",
-      "system",
-    ];
-    const currentIndex = themes.indexOf(theme);
-    const nextTheme = themes[(currentIndex + 1) % themes.length];
-    setTheme(nextTheme);
-  };
 
   useEffect(() => {
     fetchProfiles();
@@ -138,15 +121,6 @@ export function Sidebar() {
           Sync
         </button>
         <button
-          onClick={() =>
-            openModal("settings")
-          }
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
-        >
-          <Eye className="w-4 h-4" />
-          Monitors
-        </button>
-        <button
           onClick={() => openModal("settings")}
           className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
         >
@@ -159,20 +133,6 @@ export function Sidebar() {
         >
           <Users className="w-4 h-4" />
           Manage Profiles
-        </button>
-        <button
-          onClick={cycleTheme}
-          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50 rounded-lg transition-colors"
-          title={`Theme: ${theme}`}
-        >
-          {resolved === "dark" ? (
-            <Moon className="w-4 h-4" />
-          ) : theme === "system" ? (
-            <Monitor className="w-4 h-4" />
-          ) : (
-            <Sun className="w-4 h-4" />
-          )}
-          Theme
         </button>
         <button
           onClick={() => openModal("about")}

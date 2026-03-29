@@ -86,7 +86,15 @@ async fn collect_remote_objects(
         let resp = req
             .send()
             .await
-            .map_err(|e| AppError::S3(format!("Failed to list objects: {}", e)))?;
+            .map_err(|e| {
+                let mut msg = format!("Failed to list objects: {}", e);
+                let mut source = std::error::Error::source(&e);
+                while let Some(s) = source {
+                    msg.push_str(&format!(": {}", s));
+                    source = std::error::Error::source(s);
+                }
+                AppError::S3(msg)
+            })?;
 
         for obj in resp.contents() {
             let full_key = obj.key().unwrap_or_default().to_string();

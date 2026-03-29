@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FolderSync,
+  FolderOpen,
   ArrowUpFromLine,
   ArrowDownToLine,
   ArrowLeftRight,
   CheckCircle,
+  Cloud,
+  HardDrive,
 } from "lucide-react";
+import { open } from "@tauri-apps/plugin-dialog";
 import { Modal } from "../ui/Modal";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -16,29 +20,82 @@ import { useExplorerStore } from "../../stores/explorerStore";
 import { useToastStore } from "../../stores/toastStore";
 import { api } from "../../lib/tauri";
 import { formatBytes, errMsg } from "../../lib/utils";
-import type { SyncPlan, SyncResult } from "../../types";
+import type { SyncPlan, SyncResult, BucketInfo } from "../../types";
 
 const DIRECTION_OPTIONS = [
-  { value: "upload", label: "Upload (Local -> S3)" },
-  { value: "download", label: "Download (S3 -> Local)" },
+  { value: "upload", label: "Upload (Local \u2192 S3)" },
+  { value: "download", label: "Download (S3 \u2192 Local)" },
   { value: "bidirectional", label: "Bidirectional" },
 ];
 
 export function SyncModal() {
   const { activeModal, closeModal } = useModalStore();
-  const { activeProfileId } = useProfileStore();
-  const { currentBucket, currentPrefix } = useExplorerStore();
+  const { activeProfileId, profiles } = useProfileStore();
+  const { currentBucket, currentPrefix, buckets } = useExplorerStore();
   const { addToast } = useToastStore();
 
   const [localPath, setLocalPath] = useState("");
+  const [selectedProfileId, setSelectedProfileId] = useState("");
+  const [selectedBucket, setSelectedBucket] = useState("");
+  const [prefix, setPrefix] = useState("");
   const [direction, setDirection] = useState("upload");
   const [plan, setPlan] = useState<SyncPlan | null>(null);
   const [result, setResult] = useState<SyncResult | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [executing, setExecuting] = useState(false);
+  const [loadedBuckets, setLoadedBuckets] = useState<BucketInfo[]>([]);
+  const [loadingBuckets, setLoadingBuckets] = useState(false);
+
+  // Initialize from explorer state when modal opens
+  useEffect(() => {
+    if (activeModal === "syncModal") {
+      setSelectedProfileId(activeProfileId || "");
+      setSelectedBucket(currentBucket || "");
+      setPrefix(currentPrefix || "");
+      if (buckets.length > 0) {
+        setLoadedBuckets(buckets);
+      } else if (activeProfileId) {
+        setLoadingBuckets(true);
+        api.listBuckets(activeProfileId).then(setLoadedBuckets).catch(() => {}).finally(() => setLoadingBuckets(false));
+      }
+    }
+  }, [activeModal, currentBucket, currentPrefix, buckets, activeProfileId]);
+
+  // Reload buckets when profile changes
+  useEffect(() => {
+    if (!selectedProfileId || activeModal !== "syncModal") return;
+    // If same as active profile and we already have buckets from explorer, reuse
+    if (selectedProfileId === activeProfileId && buckets.length > 0) {
+      setLoadedBuckets(buckets);
+      return;
+    }
+    setLoadedBuckets([]);
+    setSelectedBucket("");
+    setLoadingBuckets(true);
+    api.listBuckets(selectedProfileId).then(setLoadedBuckets).catch(() => {}).finally(() => setLoadingBuckets(false));
+  }, [selectedProfileId]);
+
+  const profileOptions = profiles.map((p) => ({
+    value: p.id,
+    label: `${p.name} (${p.provider})`,
+  }));
+
+  const bucketOptions = loadedBuckets.map((b) => ({
+    value: b.name,
+    label: b.name,
+  }));
+
+  const handleBrowseFolder = async () => {
+    const selected = await open({
+      directory: true,
+      multiple: false,
+      title: "Select Local Folder",
+    });
+    if (selected) setLocalPath(selected as string);
+  };
 
   const handlePreview = async () => {
-    if (!activeProfileId || !currentBucket || !localPath.trim()) {
+    if (!selectedProfileId || !selectedBucket || !localPath.trim()) {
       addToast("Please fill in all required fields", "warning");
       return;
     }
@@ -48,9 +105,9 @@ export function SyncModal() {
     setResult(null);
     try {
       const syncPlan = await api.syncPreview(
-        activeProfileId,
-        currentBucket,
-        currentPrefix,
+        selectedProfileId,
+        selectedBucket,
+        prefix,
         localPath.trim(),
         direction
       );
@@ -63,15 +120,15 @@ export function SyncModal() {
   };
 
   const handleExecute = async () => {
-    if (!activeProfileId || !currentBucket || !localPath.trim()) return;
+    if (!selectedProfileId || !selectedBucket || !localPath.trim()) return;
 
     setExecuting(true);
     setResult(null);
     try {
       const syncResult = await api.syncExecute(
-        activeProfileId,
-        currentBucket,
-        currentPrefix,
+        selectedProfileId,
+        selectedBucket,
+        prefix,
         localPath.trim(),
         direction
       );
@@ -90,6 +147,8 @@ export function SyncModal() {
     closeModal();
   };
 
+  const isReady = localPath.trim() && selectedProfileId && selectedBucket;
+
   return (
     <Modal
       open={activeModal === "syncModal"}
@@ -105,7 +164,7 @@ export function SyncModal() {
             variant="ghost"
             onClick={handlePreview}
             loading={previewing}
-            disabled={!localPath.trim() || !currentBucket}
+            disabled={!isReady}
           >
             Preview Changes
           </Button>
@@ -113,7 +172,7 @@ export function SyncModal() {
             variant="primary"
             onClick={handleExecute}
             loading={executing}
-            disabled={!plan || !localPath.trim() || !currentBucket}
+            disabled={!plan || !isReady}
           >
             <FolderSync className="w-4 h-4" />
             Execute Sync
@@ -122,30 +181,70 @@ export function SyncModal() {
       }
     >
       <div className="flex flex-col gap-4">
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Local Folder Path"
-            placeholder="C:\Users\me\Documents\sync"
-            value={localPath}
-            onChange={(e) => setLocalPath(e.target.value)}
-          />
-          <Select
-            label="Direction"
-            value={direction}
-            onChange={(e) => setDirection(e.target.value)}
-            options={DIRECTION_OPTIONS}
-          />
+        {/* Local Source */}
+        <div className="flex flex-col gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <HardDrive className="w-4 h-4" />
+            Local
+          </div>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Select a local folder..."
+              value={localPath}
+              onChange={(e) => setLocalPath(e.target.value)}
+              className="flex-1"
+            />
+            <Button
+              variant="secondary"
+              onClick={handleBrowseFolder}
+              title="Browse folder"
+            >
+              <FolderOpen className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-          <span>
-            Bucket: <strong className="text-gray-700 dark:text-gray-300">{currentBucket || "none"}</strong>
-          </span>
-          {currentPrefix && (
-            <span>
-              Prefix: <strong className="text-gray-700 dark:text-gray-300">{currentPrefix}</strong>
-            </span>
-          )}
+        {/* Direction */}
+        <Select
+          label="Sync Direction"
+          value={direction}
+          onChange={(e) => setDirection(e.target.value)}
+          options={DIRECTION_OPTIONS}
+        />
+
+        {/* S3 Destination */}
+        <div className="flex flex-col gap-2 p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/50">
+          <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+            <Cloud className="w-4 h-4" />
+            S3 Destination
+          </div>
+          <Select
+            label="Profile"
+            value={selectedProfileId}
+            onChange={(e) => setSelectedProfileId(e.target.value)}
+            options={[
+              { value: "", label: "-- Select Profile --" },
+              ...profileOptions,
+            ]}
+          />
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Bucket"
+              value={selectedBucket}
+              onChange={(e) => setSelectedBucket(e.target.value)}
+              options={[
+                { value: "", label: loadingBuckets ? "Loading buckets..." : "-- Select Bucket --" },
+                ...bucketOptions,
+              ]}
+              disabled={!selectedProfileId || loadingBuckets}
+            />
+            <Input
+              label="Prefix (optional)"
+              placeholder="e.g. backups/photos/"
+              value={prefix}
+              onChange={(e) => setPrefix(e.target.value)}
+            />
+          </div>
         </div>
 
         {plan && !result && (
