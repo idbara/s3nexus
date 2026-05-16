@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd \\\"C:/Users/barar/Work/konnex-design-system\\\" && git push 2>&1\",\"description\":\"Push konnex-design-system to origin\"}",
+  "error": "Exit code 1\nTo https://github.com/konnex-id/konnex-design-system.git\n ! [rejected]        master -> master (fetch first)\nerror: failed to push some refs to 'https://github.com/konnex-id/konnex-design-system.git'\nhint: Updates were rejected because the remote contains work that you do not\nhint: have locally. This is usually caused by another repository pushing to\nhint: the same ref. If you want to integrate the remote changes, use\nhint: 'git pull' before pushing again.\nhint: See the 'Note about f...",
+  "timestamp": "2026-05-16T11:33:18.577Z",
+  "retry_count": 1
+}

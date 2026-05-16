@@ -1,0 +1,187 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1778255196077,
+  "projectRoot": "C:\\Users\\barar\\Work\\s3nexus",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "react",
+        "version": "19.1.0",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.1.0",
+        "category": "frontend"
+      },
+      {
+        "name": "vite",
+        "version": "7.0.4",
+        "category": "build"
+      }
+    ],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npm run build",
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "vite",
+      "build": "tsc && vite build",
+      "preview": "vite preview",
+      "tauri": "tauri"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "public",
+      "src"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 3,
+      "lastAccessed": 1778255195999,
+      "keyFiles": [
+        "index.html",
+        "tauri.svg",
+        "vite.svg"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 1,
+      "lastAccessed": 1778255196000,
+      "keyFiles": [
+        "Product Requirements Document.md"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 2,
+      "lastAccessed": 1778255196016,
+      "keyFiles": [
+        "tauri.svg",
+        "vite.svg"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 4,
+      "lastAccessed": 1778255196017,
+      "keyFiles": [
+        "App.css",
+        "App.tsx",
+        "main.tsx",
+        "vite-env.d.ts"
+      ]
+    },
+    "src-tauri": {
+      "path": "src-tauri",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1778255196019,
+      "keyFiles": [
+        "build.rs",
+        "Cargo.lock",
+        "Cargo.toml",
+        "tauri.conf.json"
+      ]
+    },
+    "dist\\assets": {
+      "path": "dist\\assets",
+      "purpose": "Static assets",
+      "fileCount": 2,
+      "lastAccessed": 1778255196020,
+      "keyFiles": [
+        "index-CRkD7mj8.css",
+        "index-DUoBAgO8.js"
+      ]
+    },
+    "src\\assets": {
+      "path": "src\\assets",
+      "purpose": "Static assets",
+      "fileCount": 1,
+      "lastAccessed": 1778255196022,
+      "keyFiles": [
+        "react.svg"
+      ]
+    },
+    "src\\components": {
+      "path": "src\\components",
+      "purpose": "UI components",
+      "fileCount": 0,
+      "lastAccessed": 1778255196022,
+      "keyFiles": []
+    },
+    "src\\lib": {
+      "path": "src\\lib",
+      "purpose": "Library code",
+      "fileCount": 2,
+      "lastAccessed": 1778255196023,
+      "keyFiles": [
+        "tauri.ts",
+        "utils.ts"
+      ]
+    },
+    "src\\types": {
+      "path": "src\\types",
+      "purpose": "Type definitions",
+      "fileCount": 1,
+      "lastAccessed": 1778255196024,
+      "keyFiles": [
+        "index.ts"
+      ]
+    },
+    "src-tauri\\src": {
+      "path": "src-tauri\\src",
+      "purpose": "Source code",
+      "fileCount": 4,
+      "lastAccessed": 1778255196025,
+      "keyFiles": [
+        "error.rs",
+        "lib.rs",
+        "main.rs"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}
